@@ -10,7 +10,7 @@ This is especially useful for frequently-used nodes like `AnimationNodeStateMach
 
 - Adds an **"Auto Expand"** toggle to the top of the Inspector for supported objects.
 - Automatically triggers the built-in **"Expand All"** inspector action when enabled.
-- Remembers your preferences using a simple `ConfigFile` (`user://expand_this.cfg`).
+- Remembers your preferences using a simple `ConfigFile`.
 - Supports both `Node` and `Resource` types (e.g. `AnimationNodeStateMachineTransition`).
 - Works across editor sessions — no need to re-toggle every time.
 - Minimal and non-intrusive UI.
@@ -36,10 +36,15 @@ This is especially useful for frequently-used nodes like `AnimationNodeStateMach
 
 ---
 
-## 🗃️ Preferences
+### 📁 Where is the config file stored?
 
-- Preferences are stored in `user://expand_this.cfg` under an `[objects]` section.
-- Only enabled types are stored; collapsed or default types are not saved.
+| OS        | Location |
+|-----------|----------|
+| **Windows** | `%APPDATA%\Godot\expand_this.cfg` |
+| **macOS**   | `~/Library/Application Support/Godot/expand_this.cfg` |
+| **Linux**   | `~/.local/share/godot/expand_this.cfg` |
+
+> If you ever need to **reset** the plugin’s preferences completely, just delete `expand_this.cfg` from the appropriate folder above.
 
 ---
 
