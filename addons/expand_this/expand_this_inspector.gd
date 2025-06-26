@@ -93,7 +93,7 @@ func _set_auto_expand_enabled(object: Object, enabled: bool) -> void:
 	else:
 		_prefs.erase_section_key(section, key)
 
-	_prefs.save("user://expand_this.cfg")
+	_prefs.save(ExpandThis.GLOBAL_CONFIG_PATH)
 
 
 func _on_toggle_pressed(pressed: bool, object: Object) -> void:
