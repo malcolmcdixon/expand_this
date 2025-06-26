@@ -65,4 +65,4 @@ MIT License — feel free to modify, distribute, or include in your own projects
 
 ## 🙋 Author
 
-Created by [Your Name]  
+Created by Malcolm Dixon
