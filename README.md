@@ -36,7 +36,7 @@ This is especially useful for frequently-used nodes like `AnimationNodeStateMach
 
 ---
 
-### 📁 Where is the config file stored?
+## 📁 Where is the config file stored?
 
 | OS        | Location |
 |-----------|----------|
