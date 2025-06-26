@@ -1,9 +1,12 @@
 # Godot 4+ specific ignores
 .godot/
+.cache/
+.android/
 .nomedia
 
 # Godot-specific ignores
 .import/
+*.import
 export.cfg
 export_credentials.cfg
 
