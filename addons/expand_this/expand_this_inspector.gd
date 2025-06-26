@@ -19,9 +19,8 @@ func _can_handle(object):
 
 func _parse_begin(object: Object):
 	# defer the popupmenu search if we don't have it or it's invalid
-	if _object_properties_popupmenu == null or \
-		!is_instance_valid(_object_properties_popupmenu):
-			call_deferred("_deferred_find_popupmenu")
+	if not _object_properties_popupmenu or not is_instance_valid(_object_properties_popupmenu):
+			call_deferred("_deferred_find_inspector_dock")
 
 	var auto_expand: bool = _get_auto_expand(object)
 	_add_auto_expand_ui(object, auto_expand)
@@ -30,12 +29,29 @@ func _parse_begin(object: Object):
 		call_deferred("_expand_all")
 
 
-func _deferred_find_popupmenu() -> void:
-	var result: Array = _find_popupmenu_with_item(EditorInterface.get_base_control(), "Expand All")
+func _deferred_find_inspector_dock() -> void:
+	var dock: Node =  _find_inspector_dock(EditorInterface.get_base_control())
+	
+	if not dock:
+		push_warning("Inspector Dock not found.")
+		return
+		
+	var result: Array = _find_popupmenu_with_item(dock, "Expand All")
 	_object_properties_popupmenu = result[0]
 	_expand_all_menu_item_id = result[1]
+	
 	if not _object_properties_popupmenu:
 		push_warning("Expand All PopupMenu not found.")
+
+
+func _find_inspector_dock(node: Object) -> Node:
+	for child in node.get_children(true):
+		if child.get_class() == "InspectorDock":
+			return child
+		var result = _find_inspector_dock(child)
+		if result != null:
+			return result
+	return null
 
 
 func _find_popupmenu_with_item(node: Object, item_text: String) -> Array:
