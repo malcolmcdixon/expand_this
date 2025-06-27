@@ -1,8 +1,10 @@
 class_name ExpandThisInspector
 extends EditorInspectorPlugin
 
-const CHEVRON_DOWN = preload("res://addons/expand_this/icons/chevron-down.svg")
-const CHEVRON_RIGHT = preload("res://addons/expand_this/icons/chevron-right.svg")
+#const CHEVRON_DOWN = preload("res://addons/expand_this/icons/chevron-down.svg")
+#const CHEVRON_RIGHT = preload("res://addons/expand_this/icons/chevron-right.svg")
+const GLOBAL_ON = preload("res://addons/expand_this/icons/global_on.svg")
+const GLOBAL_OFF = preload("res://addons/expand_this/icons/global_off.svg")
 
 var _object_properties_popupmenu: PopupMenu = null
 var _expand_all_menu_item_id: int = -1
@@ -79,11 +81,22 @@ func _parse_end(object: Object) -> void:
 	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		
 	for section in _sections:
+		var global_button = Button.new()
+		global_button.toggle_mode = true
+		global_button.icon = GLOBAL_OFF
+		global_button.flat = true
+		global_button.tooltip_text = "Auto Expand all %s groups" % section
+		global_button.focus_mode = Control.FOCUS_NONE
+		global_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		global_button.toggled.connect(_on_global_toggled.bind(global_button, _sections[section]))
+		flow.add_child(global_button)
+		
 		var check_button = CheckButton.new()
 		check_button.toggle_mode = true
 		check_button.text = section
-		#check_button.tooltip_text = "Automatically expand all %s" % object.get_class()
-		check_button.toggled.connect(_on_toggle_pressed.bind(_sections[section]))
+		check_button.tooltip_text = \
+			"Auto Expand %s in %s nodes" % [section, object.get_class()]
+		check_button.toggled.connect(_on_group_toggled.bind(_sections[section]))
 		#check_button.button_pressed = auto_expand_state
 		flow.add_child(check_button)
 
@@ -213,10 +226,14 @@ func _set_auto_expand_enabled(object: Object, enabled: bool) -> void:
 	if err != OK:
 		push_warning("An error occurred saving the Expand This config file: %s" % error_string(err))
 
-func _on_toggle_pressed(pressed: bool, section: Control) -> void:
+func _on_group_toggled(pressed: bool, section: Control) -> void:
 	if pressed:
 		section.unfold()
 	else:
 		section.fold()
 	
 	#_set_auto_expand_enabled(object, pressed)
+
+
+func _on_global_toggled(pressed: bool, button: Button, section: Control) -> void:
+	button.icon = GLOBAL_ON if pressed else GLOBAL_OFF
