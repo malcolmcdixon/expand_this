@@ -1,6 +1,12 @@
 class_name ExpandThisSection
 
 
+## ExpandThisSection
+##
+## Stores information about a parsed inspector section,
+## including the object type, category, group, and its control.
+## Provides unique keys for group and category matching.
+
 const KEY_SEPARATOR: String = "|"
 
 var object: String
