@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3 uid="uid://cuyx3yewo1jt1"]
+
+[ext_resource type="Script" uid="uid://c8tqelpftn777" path="res://addons/expand_this/fake_dock/fake_dock.gd" id="1_bl7v3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dnwm7"]
+
+[node name="PanelContainer" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bl7v3")
+
+[node name="FakeDock" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="DragHandle" type="CenterContainer" parent="FakeDock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+mouse_default_cursor_shape = 14
+
+[node name="DragIndicator" type="PanelContainer" parent="FakeDock/DragHandle"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(100, 3)
+layout_mode = 2
+mouse_filter = 1
+mouse_default_cursor_shape = 9
+theme_override_styles/panel = SubResource("StyleBoxFlat_dnwm7")
+
+[node name="ScrollArea" type="ScrollContainer" parent="FakeDock"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScrollContent" type="VBoxContainer" parent="FakeDock/ScrollArea"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
