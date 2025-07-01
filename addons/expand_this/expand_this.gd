@@ -6,11 +6,15 @@ extends EditorPlugin
 const CHEVRON_DOWN = preload("res://addons/expand_this/icons/chevron-down.svg")
 const CHEVRON_RIGHT = preload("res://addons/expand_this/icons/chevron-right.svg")
 
+const FAKE_DOCK = preload("res://addons/expand_this/fake_dock/fake_dock.tscn")
+
 static var global_config_path: String = get_global_config_path()
 
 var inspector_plugin: ExpandThisInspector
 var _prefs := ConfigFile.new()
 var _inspector_dock: Control
+var _dock: Control
+var _opened_height: float = 300.0
 
 
 func _enter_tree():
@@ -18,10 +22,41 @@ func _enter_tree():
 	_prefs.load(global_config_path)
 	# find the inspector dock via a recursive search
 	_inspector_dock = _find_inspector_dock(EditorInterface.get_base_control())
+	#print_node_hierarchy(_inspector_dock)
+	#return
+	#var inspector := EditorInterface.get_inspector()
+
 	# add a collapsible section at the bottom of the inspector dock
 	if is_instance_valid(_inspector_dock):
-		var auto_expand_section: Control = CollapsibleContainer.new("Auto Expand")
-		_inspector_dock.add_child(auto_expand_section)
+		var auto_expand_section: Control = CollapsibleContainer.new("Auto Expand Preferences")
+		
+		_dock = FAKE_DOCK.instantiate()
+		_dock.theme = EditorInterface.get_editor_theme()
+		
+		var sb = StyleBoxFlat.new()
+		sb.bg_color = _dock.theme.get_color("dark_color_1", "Editor")
+		sb.set_corner_radius_all(
+			EditorInterface.get_editor_settings()
+				.get_setting("interface/theme/corner_radius"))
+		_dock.add_theme_stylebox_override("panel", sb)
+		
+		auto_expand_section.toggled.connect(
+			func(expanded):
+				if expanded:
+					_dock.set_height(_opened_height)
+				else:
+					_dock.set_height(_dock.min_height)
+		)
+		
+		_dock.height_changed.connect(
+			func(size):
+				prints("dragged:", size)
+				_opened_height = size
+		)
+
+		_dock.call_deferred("set_content", auto_expand_section)
+		add_control_to_container(CONTAINER_INSPECTOR_BOTTOM, _dock)
+		
 		inspector_plugin = ExpandThisInspector.new(_prefs, _inspector_dock, auto_expand_section)
 		add_inspector_plugin(inspector_plugin)
 	else:
@@ -29,6 +64,8 @@ func _enter_tree():
 
 
 func _exit_tree():
+	remove_control_from_container(CONTAINER_INSPECTOR_BOTTOM, _dock)
+	_dock.free()
 	remove_inspector_plugin(inspector_plugin)
 
 
@@ -56,31 +93,8 @@ func _find_inspector_dock(node: Object) -> Node:
 	return null
 
 
-#func _add_collapsible_section(title: String, content: Control, top_margin: int = 0) -> MarginContainer:
-	#var section := MarginContainer.new()
-	#section.add_theme_constant_override("margin_top", top_margin)
-#
-	#var container := VBoxContainer.new()
-	#section.add_child(container)
-#
-	#var toggle_button := Button.new()
-	#toggle_button.icon = CHEVRON_DOWN
-	#toggle_button.text = title
-	#toggle_button.flat = true
-	#toggle_button.focus_mode = Control.FOCUS_NONE
-	#toggle_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	#toggle_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	#toggle_button.custom_minimum_size = Vector2(0, 24)
-#
-	#var inner := VBoxContainer.new()
-	#inner.add_child(content)
-#
-	#toggle_button.pressed.connect(func():
-		#inner.visible = !inner.visible
-		#toggle_button.icon = CHEVRON_DOWN if inner.visible else CHEVRON_RIGHT
-	#)
-#
-	#container.add_child(toggle_button)
-	#container.add_child(inner)
-#
-	#return section
+func print_node_hierarchy(node: Node, indent: int = 0) -> void:
+	var spacer = " ".repeat(indent)
+	print("%s%s [%s]" % [spacer, node.name, node.get_class()])
+	for child in node.get_children():
+		print_node_hierarchy(child, indent + 2)
