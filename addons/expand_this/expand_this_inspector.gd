@@ -13,7 +13,7 @@ var _prefs: ConfigFile
 var _inspector_dock: Control
 var _inspector: EditorInspector
 var _auto_expand_section: CollapsibleContainer
-var _inspector_sections: Dictionary[String, Control]
+var _sections: Array[ExpandThisSection] = []
 var _current_category: String
 var _edited_object: Object
 
@@ -43,13 +43,13 @@ func _on_edited_object_changed() -> void:
 		# multi node edit feature is not available yet
 		_auto_expand_section.display_message("Sorry, but multi node edit feature is not available yet!")
 
-	var sections: Array[ExpandThisSection] = []
-	_walk_categories_and_sections(_inspector, sections)
+	_sections.clear()
+	_walk_categories_and_sections(_inspector, _sections)
 
 	#for s in sections:
 		#print("Section: ", s.group, " | Category: ", s.category, " | Parent: ", s.parent)
 
-	_new_build_ui(sections)
+	_new_build_ui(_sections)
 
 
 func _on_resource_selected(resource: Resource, path: String) -> void:
@@ -60,7 +60,7 @@ func _on_resource_selected(resource: Resource, path: String) -> void:
 	#return "%s%s%s" % [_edited_object.get_class(), ExpandThisSection.KEY_SEPARATOR, section.key]
 
 
-func _set_group_expand(section: ExpandThisSection, enabled: bool) -> void:
+func _set_group_rule(section: ExpandThisSection, enabled: bool) -> void:
 	_prefs.set_value("groups", section.key, enabled)
 
 	_save_prefs()
@@ -76,7 +76,7 @@ func _set_group_expand(section: ExpandThisSection, enabled: bool) -> void:
 	#_save_prefs()
 
 
-func _set_global_expand(section: ExpandThisSection, enabled: bool) -> void:
+func _set_global_rule(section: ExpandThisSection, enabled: bool) -> void:
 	var key: String = section.group
 	if enabled:
 		_prefs.set_value("global", key, enabled)
@@ -95,7 +95,7 @@ func _save_prefs() -> void:
 func _get_auto_expand_states(section: ExpandThisSection) -> Dictionary[String, bool]:
 	var states: Dictionary[String, bool] = {
 		"global": false,
-		"category": false,
+		#"category": false,
 		"group": false,
 		"override": false
 	}
@@ -109,15 +109,14 @@ func _get_auto_expand_states(section: ExpandThisSection) -> Dictionary[String, b
 		#states.category = true
 
 	# Calculate fallback
-	var fallback := states.category or states.global
+	#var fallback := states.category or states.global
 
 	# Check group setting
-	var key := section.key
-	if _prefs.has_section_key("groups", key):
-		states.group = _prefs.get_value("groups", key)
-		states.override = fallback
+	if _prefs.has_section_key("groups", section.key):
+		states.group = _prefs.get_value("groups", section.key)
+		states.override = states.global
 	else:
-		states.group = fallback
+		states.group = states.global
 
 	return states
 
@@ -126,13 +125,23 @@ func _on_group_toggled(pressed: bool, section: ExpandThisSection) -> void:
 	if pressed:
 		section.unfold()
 
-	_set_group_expand(section, pressed)
+	_set_group_rule(section, pressed)
 
 
 func _on_global_toggled(pressed: bool, button: Button, section: ExpandThisSection) -> void:
 	button.icon = GLOBAL_ON if pressed else GLOBAL_OFF
 	
-	_set_global_expand(section, pressed)
+	_set_global_rule(section, pressed)
+
+	for s in _sections:
+		if s.group == section.group:
+			var states := _get_auto_expand_states(s)
+			s.group_button.set_pressed_no_signal(states.group)
+			if states.group:
+				s.unfold()
+
+			# add override button if required
+			#TODO code to add ovveride button
 
 
 #func _on_category_toggled(pressed: bool, button: Button, section: ExpandThisSection) -> void:
