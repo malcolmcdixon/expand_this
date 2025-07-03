@@ -57,6 +57,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 #========== PUBLIC METHODS ==========
+
 ## Sets the dock content, replacing any existing children.
 func set_content(content: Control) -> void:
 	# clear and add new content
