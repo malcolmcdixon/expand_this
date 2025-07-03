@@ -27,7 +27,6 @@ static var global_config_path: String = get_global_config_path()
 
 var _inspector_plugin: ExpandThisInspector
 var _prefs := ConfigFile.new()
-var _inspector_dock: Control
 var _dock: Control
 var _opened_height: float = 300.0
 
@@ -53,45 +52,39 @@ static func get_global_config_path() -> String:
 func _enter_tree():
 	# load saved preferences
 	_prefs.load(global_config_path)
-	# get a reference to the inspector dock
-	_inspector_dock = EditorInterface.get_inspector().get_parent()
-
 
 	# add a collapsible section at the bottom of the inspector dock
-	if is_instance_valid(_inspector_dock):
-		var auto_expand_section: Control = CollapsibleContainer.new("Auto Expand Preferences")
-		
-		_dock = FAKE_DOCK.instantiate()
-		_dock.theme = EditorInterface.get_editor_theme()
-		
-		var sb = StyleBoxFlat.new()
-		sb.bg_color = _dock.theme.get_color("dark_color_1", "Editor")
-		sb.set_corner_radius_all(
-			EditorInterface.get_editor_settings()
-				.get_setting("interface/theme/corner_radius"))
-		_dock.add_theme_stylebox_override("panel", sb)
-		
-		auto_expand_section.toggled.connect(
-			func(expanded):
-				if expanded:
-					_dock.set_height(_opened_height)
-				else:
-					_dock.set_height(_dock.min_height)
-		)
-		
-		_dock.height_changed.connect(
-			func(size):
-				prints("dragged:", size)
-				_opened_height = size
-		)
+	var auto_expand_section: Control = CollapsibleContainer.new("Auto Expand Preferences")
+	
+	_dock = FAKE_DOCK.instantiate()
+	_dock.theme = EditorInterface.get_editor_theme()
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = _dock.theme.get_color("dark_color_1", "Editor")
+	sb.set_corner_radius_all(
+		EditorInterface.get_editor_settings()
+			.get_setting("interface/theme/corner_radius"))
+	_dock.add_theme_stylebox_override("panel", sb)
+	
+	auto_expand_section.toggled.connect(
+		func(expanded):
+			if expanded:
+				_dock.set_height(_opened_height)
+			else:
+				_dock.set_height(_dock.min_height)
+	)
+	
+	_dock.height_changed.connect(
+		func(size):
+			prints("dragged:", size)
+			_opened_height = size
+	)
 
-		_dock.call_deferred("set_content", auto_expand_section)
-		add_control_to_container(CONTAINER_INSPECTOR_BOTTOM, _dock)
-		
-		_inspector_plugin = ExpandThisInspector.new(_prefs, _inspector_dock, auto_expand_section)
-		add_inspector_plugin(_inspector_plugin)
-	else:
-		push_error("Cannot find the Inspector Dock, Auto Expand has encountered a critical error.")
+	_dock.call_deferred("set_content", auto_expand_section)
+	add_control_to_container(CONTAINER_INSPECTOR_BOTTOM, _dock)
+	
+	_inspector_plugin = ExpandThisInspector.new(_prefs, auto_expand_section)
+	add_inspector_plugin(_inspector_plugin)
 
 
 func _exit_tree():
