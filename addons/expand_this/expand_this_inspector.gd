@@ -7,8 +7,6 @@ const CATEGORY_ON = preload("res://addons/expand_this/icons/category_on.svg")
 const CATEGORY_OFF = preload("res://addons/expand_this/icons/category_off.svg")
 const OVERRIDDEN = preload("res://addons/expand_this/icons/overridden.svg")
 
-const KEY_SEPARATOR: String = "/" # for EditorInspectorSections
-
 var _prefs: ConfigFile
 var _inspector_dock: Control
 var _inspector: EditorInspector
@@ -27,8 +25,6 @@ func _init(prefs: ConfigFile, auto_expand_section: Control) -> void:
 	
 	_inspector = EditorInterface.get_inspector()
 	_inspector.edited_object_changed.connect(_on_edited_object_changed)
-	_inspector.resource_selected.connect(_on_resource_selected)
-	_inspector.property_edited.connect(_on_property_edited)
 
 
 func _on_edited_object_changed() -> void:
@@ -39,41 +35,36 @@ func _on_edited_object_changed() -> void:
 		_auto_expand_section.display_message("Please select a node")
 		return
 
+	prints("edited object:", _edited_object.get_class())
+
 	if _edited_object.get_class() == "MultiNodeEdit":
 		# multi node edit feature is not available yet
 		_auto_expand_section.display_message("Sorry, but multi node edit feature is not available yet!")
+		return
 
-	_sections.clear()
-	_walk_categories_and_sections(_inspector, _sections)
+	_rebuild_ui()
 
-	#for s in sections:
-		#print("Section: ", s.group, " | Category: ", s.category, " | Parent: ", s.parent)
-
-	_new_build_ui(_sections)
+	#_print_inspector_hierarchy(_inspector)
 
 
-func _on_resource_selected(resource: Resource, path: String) -> void:
-	prints("resource selected:", resource, path)
+func _print_inspector_hierarchy(node: Node, indent: int = 0) -> void:
+	var prefix := " ".repeat(indent * 2)
+	var info: Variant
+	if node is EditorInspector:
+		info  = node.get_edited_object().get_class()
+	else:
+		info = node.get("tooltip_text")
+		
+	print("%s%s | %s" % [prefix, node.get_class(), info])
 
-
-#func _get_group_key(section: ExpandThisSection) -> String:
-	#return "%s%s%s" % [_edited_object.get_class(), ExpandThisSection.KEY_SEPARATOR, section.key]
+	for child in node.get_children():
+		_print_inspector_hierarchy(child, indent + 1)
 
 
 func _set_group_rule(section: ExpandThisSection, enabled: bool) -> void:
 	_prefs.set_value("groups", section.key, enabled)
 
-	_save_prefs()
-
-
-#func _set_category_expand(section: ExpandThisSection, enabled: bool) -> void:
-	#var key: String = section.category_key
-	#if enabled:
-		#_prefs.set_value("categories", key, enabled)
-	#else:
-		#_prefs.erase_section_key("categories", key)
-#
-	#_save_prefs()
+	ExpandThis.save_prefs()
 
 
 func _set_global_rule(section: ExpandThisSection, enabled: bool) -> void:
@@ -83,19 +74,12 @@ func _set_global_rule(section: ExpandThisSection, enabled: bool) -> void:
 	else:
 		_prefs.erase_section_key("global", key)
 
-	_save_prefs()
-
-
-func _save_prefs() -> void:
-	var err: Error = _prefs.save(ExpandThis.global_config_path)
-	if err != OK:
-		push_warning("Error saving Expand This config: %s" % error_string(err))
+	ExpandThis.save_prefs()
 
 
 func _get_auto_expand_states(section: ExpandThisSection) -> Dictionary[String, bool]:
 	var states: Dictionary[String, bool] = {
 		"global": false,
-		#"category": false,
 		"group": false,
 		"override": false
 	}
@@ -103,13 +87,6 @@ func _get_auto_expand_states(section: ExpandThisSection) -> Dictionary[String, b
 	# Check global
 	if _prefs.has_section_key("global", section.group):
 		states.global = true
-
-	## Check category
-	#if _prefs.has_section_key("categories", section.key):
-		#states.category = true
-
-	# Calculate fallback
-	#var fallback := states.category or states.global
 
 	# Check group setting
 	if _prefs.has_section_key("groups", section.key):
@@ -122,42 +99,22 @@ func _get_auto_expand_states(section: ExpandThisSection) -> Dictionary[String, b
 
 
 func _on_group_toggled(pressed: bool, section: ExpandThisSection) -> void:
-	if pressed:
-		section.unfold()
-
 	_set_group_rule(section, pressed)
+	_update_section_ui(section)
 
 
 func _on_global_toggled(pressed: bool, button: Button, section: ExpandThisSection) -> void:
-	button.icon = GLOBAL_ON if pressed else GLOBAL_OFF
-	
 	_set_global_rule(section, pressed)
 
 	for s in _sections:
 		if s.group == section.group:
-			var states := _get_auto_expand_states(s)
-			s.group_button.set_pressed_no_signal(states.group)
-			if states.group:
-				s.unfold()
-
-			# add override button if required
-			#TODO code to add ovveride button
-
-
-#func _on_category_toggled(pressed: bool, button: Button, section: ExpandThisSection) -> void:
-	#button.icon = CATEGORY_ON if pressed else CATEGORY_OFF
-#
-	#_set_category_expand(section, pressed)
-	# get effective value and unfold if true
+			_update_section_ui(s)
 
 
 func _on_override_removed(button: Button, section: ExpandThisSection) -> void:
 	_prefs.erase_section_key("groups", section.key)
-
-	_save_prefs()
-	
-	# Remove the override button
-	button.queue_free()
+	ExpandThis.save_prefs()
+	_update_section_ui(section)
 
 
 func _build_header(icon: Texture2D, title: String) -> PanelContainer:
@@ -184,53 +141,51 @@ func _build_header(icon: Texture2D, title: String) -> PanelContainer:
 	return header
 
 
-func _build_button(toggle: bool, icon: Texture2D, tooltip: String, state: bool) -> Button:
+func _build_button(toggle: bool, icon: Texture2D, tooltip: String) -> Button:
 		var button = Button.new()
 		button.toggle_mode = toggle
 		button.icon = icon
 		button.flat = true
 		button.tooltip_text = tooltip
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		button.button_pressed = state
-		
 		return button
 
 
-func _on_property_edited(property: String) -> void:
-	var edited_object := _inspector.get_edited_object()
-
-	var prop_value = edited_object.get(property)
-	#if prop_value == null:
-		#call_deferred("_refresh_sections_after_property_cleared")
+#func _on_property_edited(property: String) -> void:
+	#print("on property edited")
+	#call_deferred("_rebuild_ui")
 
 
-#func _refresh_sections_after_property_cleared() -> void:
-	#var new_sections: Dictionary[String, Control] = _find_sections(_inspector_dock)
-	#if new_sections.size() != _inspector_sections.size():
-		#_build_ui(new_sections)
+func _rebuild_ui() -> void:
+	print("===== REBUILDING UI =====")
+	_sections.clear()
+	_walk_categories_and_sections(_inspector, _sections, _edited_object.get_class())
+
+	_build_ui(_sections)
 
 
-func _find_categories_and_sections() -> Array:
-	var result: Array = []
-
-	var categories_and_sections := []
-	var current_category: String = ""
-
-	for child in _inspector.get_children():
-		_walk_categories_and_sections(child, result, current_category)
-
-	return result
-
-
-func _walk_categories_and_sections(node: Node, sections: Array, current_category: String = "Unknown", parent_section: ExpandThisSection = null) -> void:
+func _walk_categories_and_sections(
+	node: Node,
+	sections: Array,
+	current_category: String,
+	parent_section: ExpandThisSection = null
+) -> void:
 	for child in node.get_children():
-		if child.get_class() == "EditorInspectorCategory":
+		if child.get_class() == "EditorPropertyResource":
+			if not child.child_entered_tree.is_connected(_on_resource_child_entered):
+				child.child_entered_tree.connect(_on_resource_child_entered)
+
+		elif child.get_class() == "EditorInspector":
+			current_category = child.get_edited_object().get_class()
+
+		elif child.get_class() == "EditorInspectorCategory":
 			var tooltip: String = child.tooltip_text
-			if tooltip.begins_with("class|"):
-				var parts := tooltip.split("|")
-				current_category = parts[1] if parts.size() > 1 else "Unknown"
-			else:
-				current_category = tooltip
+			if tooltip != "":
+				if tooltip.begins_with("class|"):
+					var parts := tooltip.split("|")
+					current_category = parts[1] if parts.size() > 1 else "Unknown"
+				else:
+					current_category = tooltip
 
 		elif child.get_class() == "EditorInspectorSection":
 			var group: String = child.tooltip_text
@@ -251,7 +206,23 @@ func _walk_categories_and_sections(node: Node, sections: Array, current_category
 		_walk_categories_and_sections(child, sections, current_category, parent_section)
 
 
-func _new_build_ui(sections: Array[ExpandThisSection]) -> void:
+func _on_resource_child_entered(child: Node) -> void:
+	if child is EditorInspector:
+		print("Sub-inspector opened:", child)
+
+		# Rebuild UI now if needed
+		call_deferred("_rebuild_ui")
+
+		# Optionally, connect to its exit to know when it closes
+		child.tree_exited.connect(_on_resource_tree_exited)
+
+
+func _on_resource_tree_exited() -> void:
+	print("Sub-inspector closed")
+	_rebuild_ui()
+
+
+func _build_ui(sections: Array[ExpandThisSection]) -> void:
 	# build auto expand section content
 	var container := VBoxContainer.new()
 	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -281,44 +252,58 @@ func _new_build_ui(sections: Array[ExpandThisSection]) -> void:
 			true,
 			GLOBAL_OFF,
 			"Auto Expand all %s groups" % section.group,
-			states.global
 		)
 		global_button.toggled.connect(_on_global_toggled.bind(global_button, section))
 		row.add_child(global_button)
 		section.global_button = global_button
 
-		# add category icon button
-		#var category_button = _build_button(
-			#true,
-			#CATEGORY_OFF,
-			#"Auto Expand all %s groups in %s category" % [section.group, section.category],
-			#states.category
-		#)
-		#category_button.toggled.connect(_on_category_toggled.bind(category_button, section))
-		#row.add_child(category_button)
-		
 		# add group button
 		var check_button = CheckButton.new()
-		check_button.toggle_mode = true
 		check_button.text = section.group
 		check_button.tooltip_text = \
 			"Auto Expand %s in %s nodes" % [section.group, section.category]
 		check_button.toggled.connect(_on_group_toggled.bind(section))
-		check_button.button_pressed = states.group
 		row.add_child(check_button)
 		section.group_button = check_button
 
-		# add override button if a group rule exists
-		# along with a global or category rule
-		if states.override:
-			var override_button = Button.new()
-			override_button.icon = OVERRIDDEN
-			override_button.tooltip_text = "Remove group override rule"
-			override_button.flat = true
-			override_button.pressed.connect(_on_override_removed.bind(override_button, section))
-			row.add_child(override_button)
+		_update_section_ui(section)
 
 		# add row to container
 		container.add_child(row)
 
 	_auto_expand_section.set_content(container)
+
+
+func _add_override_button(section: ExpandThisSection) -> void:
+	# ensure button not added if already exists
+	if section.override_button:
+		return
+
+	var override_button = _build_button(
+		false,
+		OVERRIDDEN,
+		"Remove group override rule"
+	)
+	override_button.pressed.connect(_on_override_removed.bind(override_button, section))
+	section.group_button.add_sibling(override_button)
+	section.override_button = override_button
+
+
+func _update_section_ui(section: ExpandThisSection) -> void:
+	var states := _get_auto_expand_states(section)
+
+	if section.global_button:
+		section.global_button.icon = GLOBAL_ON if states.global else GLOBAL_OFF
+		section.global_button.set_pressed_no_signal(states.global)
+
+	if section.group_button:
+		section.group_button.set_pressed_no_signal(states.group)
+
+	if states.group:
+		section.unfold()
+
+	if states.override and not section.override_button:
+		_add_override_button(section)
+	elif not states.override and section.override_button:
+		section.override_button.queue_free()
+		section.override_button = null
