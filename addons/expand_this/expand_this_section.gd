@@ -19,6 +19,7 @@ var control: Control
 var parent: ExpandThisSection
 var global_button: Button
 var group_button: Button
+var override_button: Button
 
 var key: String:
 	get:
