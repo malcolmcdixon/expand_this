@@ -19,16 +19,16 @@ const CHEVRON_RIGHT = preload("res://addons/expand_this/icons/chevron-right.svg"
 
 const FAKE_DOCK = preload("res://addons/expand_this/fake_dock/fake_dock.tscn")
 
+#========== STATIC VARIABLES ==========
+
+static var _global_config_path: String
+static var _prefs := ConfigFile.new()
+
 #========== MEMBER VARIABLES ==========
 
 var _inspector_plugin: ExpandThisInspector
-static var _global_config_path: String
-static var _prefs := ConfigFile.new()
 var _dock: Control
 var _opened_height: float = 300.0
-#var _settings: EditorSettings:
-	#get:
-		#return EditorInterface.get_editor_settings()
 
 
 #========== OVERRIDDEN VIRTUAL METHODS ==========
