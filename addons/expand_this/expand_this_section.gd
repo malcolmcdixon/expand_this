@@ -17,9 +17,6 @@ var category: String
 var group: String
 var control: Control
 var parent: ExpandThisSection
-var global_button: Button
-var group_button: Button
-var override_button: Button
 
 var key: String:
 	get:
@@ -31,6 +28,11 @@ var key: String:
 func _init(_category: String = "", _group: String = "") -> void:
 	category = _category
 	group = _group
+
+
+func _to_string() -> String:
+	return "Category: %s, Group: %s, Control: %s, Parent Section: %s" % \
+		[category, group, control, parent]
 
 
 #========== PUBLIC METHODS ==========
