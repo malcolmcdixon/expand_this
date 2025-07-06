@@ -61,9 +61,8 @@ func _init(prefs: ConfigFile, auto_expand_section: Control) -> void:
 	
 	_inspector = EditorInterface.get_inspector()
 	_inspector.edited_object_changed.connect(_on_edited_object_changed)
-
-	_edited_object = _inspector.get_edited_object()
-	_rebuild_ui()
+	
+	call_deferred("_on_edited_object_changed")
 
 
 #========== PRIVATE METHODS ==========
@@ -92,6 +91,10 @@ func _walk_categories_and_sections(
 
 		elif child.get_class() == "EditorInspectorSection":
 			var group: String = child.tooltip_text
+			# skip sections without a tooltip, e.g. Bones in Skeleton3D
+			if group == "":
+				continue
+				
 			var section := ExpandThisSection.new()
 			section.category = current_category
 			section.group = group
@@ -238,9 +241,9 @@ func _update_ui_row(ui_row: ExpandThisUIRow) -> void:
 
 func _rebuild_ui() -> void:
 	ExpandThisUIRow.clear()
-	
-	_walk_categories_and_sections(_inspector, _edited_object.get_class())
 
+	_walk_categories_and_sections(_inspector, _edited_object.get_class())
+	
 	_build_ui()
 
 
@@ -296,7 +299,7 @@ func _on_edited_object_changed() -> void:
 		_auto_expand_section.display_message("Sorry, but multi node edit feature is not available yet!")
 		return
 
-	_rebuild_ui()
+	call_deferred("_rebuild_ui")
 
 
 func _on_resource_child_entered(child: Node) -> void:
@@ -310,7 +313,7 @@ func _on_resource_child_entered(child: Node) -> void:
 
 func _on_resource_tree_exited() -> void:
 	# Sub-inspector closed so rebuild UI
-	_rebuild_ui()
+	call_deferred("_rebuild_ui")
 
 
 func _on_global_toggled(pressed: bool, button: Button, ui_row: ExpandThisUIRow) -> void:
@@ -319,6 +322,13 @@ func _on_global_toggled(pressed: bool, button: Button, ui_row: ExpandThisUIRow) 
 
 
 func _on_group_toggled(pressed: bool, ui_row: ExpandThisUIRow) -> void:
+	if ui_row.sections.any(func(s): return not is_instance_valid(s.control)):
+		call_deferred("_rebuild_ui")
+		# Find the matching row again
+		for new_row in ExpandThisUIRow.get_rows():
+			if new_row.key == ui_row.key:
+				ui_row = new_row
+
 	_set_group_rule(ui_row, pressed)
 	_update_ui_row(ui_row)
 
