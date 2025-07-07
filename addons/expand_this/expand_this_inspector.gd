@@ -284,6 +284,17 @@ func _set_group_rule(ui_row: ExpandThisUIRow, enabled: bool) -> void:
 	ExpandThis.save_prefs()
 
 
+func _check_controls_valid(ui_row: ExpandThisUIRow) -> ExpandThisUIRow:
+	if ui_row.sections.any(func(s): return not is_instance_valid(s.control)):
+		call_deferred("_rebuild_ui")
+		# Find the matching row again
+		for new_row in ExpandThisUIRow.get_rows():
+			if new_row.key == ui_row.key:
+				ui_row = new_row
+	
+	return ui_row
+
+
 #========== SIGNAL HANDLERS ==========
 
 func _on_edited_object_changed() -> void:
@@ -317,18 +328,13 @@ func _on_resource_tree_exited() -> void:
 
 
 func _on_global_toggled(pressed: bool, button: Button, ui_row: ExpandThisUIRow) -> void:
+	ui_row = _check_controls_valid(ui_row)
 	_set_global_rule(ui_row, pressed)
 	_update_ui_row(ui_row)
 
 
 func _on_group_toggled(pressed: bool, ui_row: ExpandThisUIRow) -> void:
-	if ui_row.sections.any(func(s): return not is_instance_valid(s.control)):
-		call_deferred("_rebuild_ui")
-		# Find the matching row again
-		for new_row in ExpandThisUIRow.get_rows():
-			if new_row.key == ui_row.key:
-				ui_row = new_row
-
+	ui_row = _check_controls_valid(ui_row)
 	_set_group_rule(ui_row, pressed)
 	_update_ui_row(ui_row)
 
