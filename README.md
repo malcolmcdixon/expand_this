@@ -1,19 +1,30 @@
 # Expand This
 
-**Expand This** is a lightweight plugin that automatically expands the property sections of selected node or resource types in the Godot Inspector.
-
-This is especially useful for frequently-used nodes like `AnimationNodeStateMachineTransition`, `Node3D`, or any object whose collapsible sections you'd like to see expanded by default — saving time and reducing clicks.
+**Expand This** is a lightweight plugin for the Godot Editor that automatically expands the Inspector sections you care about — saving time and repetitive clicks when working with nodes or resources that have collapsible property groups.
 
 ---
 
 ## ✨ Features
 
-- Adds an **"Auto Expand"** toggle to the top of the Inspector for supported objects.
-- Automatically triggers the built-in **"Expand All"** inspector action when enabled.
-- Remembers your preferences using a simple `ConfigFile`.
-- Supports both `Node` and `Resource` types (e.g. `AnimationNodeStateMachineTransition`).
-- Works across editor sessions — no need to re-toggle every time.
-- Minimal and non-intrusive UI.
+- Adds a custom **Auto Expand** panel to the Inspector.
+- Lets you define **global rules** to auto-expand groups across all nodes/resources.
+- Supports **per-category rules** that override the global rule for specific node types.
+- Handles nested sections and sub-resource inspectors automatically.
+- Stores your preferences in a simple `ConfigFile` — preferences persist across sessions.
+- Lightweight, non-intrusive, and designed to feel native to the Godot Editor.
+
+---
+
+## ⚙️ How It Works
+
+When you select any `Node` or `Resource`:
+1. The plugin scans the Inspector’s sections and categories.
+2. Sections are grouped into unique *category/group* combinations.
+3. The Auto Expand panel shows toggle buttons for each group:
+   - **Global toggle**: expands this group for all node/resource types.
+   - **Group toggle**: expands this group for a specific category only, overriding the global rule.
+   - Remove an override with a single click.
+4. When rules match, sections unfold automatically — no more repeated manual expanding.
 
 ---
 
@@ -22,7 +33,7 @@ This is especially useful for frequently-used nodes like `AnimationNodeStateMach
 1. **Download or clone** this repository.
 2. Copy the `addons/expand_this/` folder into your Godot project.
 3. In Godot:
-   - Go to **Project > Project Settings > Plugins** tab.
+   - Open **Project > Project Settings > Plugins**.
    - Find **Expand This** in the list.
    - Click **Enable**.
 
@@ -30,44 +41,51 @@ This is especially useful for frequently-used nodes like `AnimationNodeStateMach
 
 ## 📦 Usage
 
-1. Select any supported object in the Inspector (e.g. a `Node3D`, `Sprite2D`, or a state machine transition).
-2. You'll see a small **"Auto Expand"** checkbox at the top of the Inspector.
-3. Toggle it **on** to auto-expand the properties whenever this type of object is selected.
+1. Select any supported `Node` or `Resource` in the Inspector.
+2. Open the **Auto Expand** panel.
+3. Toggle **Global** to expand the group for all objects.
+4. Toggle **Group** to expand the group for the current category only.
+5. Click the override icon to remove category-specific rules.
 
 ---
 
-## 📁 Where is the config file stored?
+## 🗂️ Config File Location
 
-| OS        | Location |
-|-----------|----------|
+Your preferences are stored in a platform-specific `ConfigFile`:
+
+| OS | Location |
+|-----------|-----------------------------------------------|
 | **Windows** | `%APPDATA%\Godot\expand_this.cfg` |
-| **macOS**   | `~/Library/Application Support/Godot/expand_this.cfg` |
-| **Linux**   | `~/.local/share/godot/expand_this.cfg` |
+| **macOS** | `~/Library/Application Support/Godot/expand_this.cfg` |
+| **Linux** | `~/.local/share/godot/expand_this.cfg` |
 
-> If you ever need to **reset** the plugin’s preferences completely, just delete `expand_this.cfg` from the appropriate folder above.
-
----
-
-## 💡 Example Use Case
-
-When editing state machine transitions (`AnimationNodeStateMachineTransition`), Godot collapses most sections by default.  
-With this plugin enabled, every transition you select is automatically fully expanded — no more repetitive clicking!
+To reset your rules, just delete `expand_this.cfg`.
 
 ---
 
-## 🧪 Compatibility
+## 💡 Example Use Cases
 
-- ✅ Tested with Godot 4.3 and newer
-- ❌ Not compatible with Godot 3.x
+- Always expand **Parameters** in an `AnimationTree` node.
+- Keep the **Transform** section of a `Node3D` open by default.
+- Instantly unfold sections for `AnimationNodeStateMachineTransition` nodes.
+
+---
+
+## ✅ Compatibility
+
+- ✔️ Designed for **Godot 4.3** and newer
+- It is tested and works with the latest stable Godot releases. If you encounter any issues on newer versions, please report them!_
 
 ---
 
 ## 📄 License
 
-MIT License — feel free to modify, distribute, or include in your own projects.
+MIT License — free to use, modify, and distribute.
 
 ---
 
 ## 🙋 Author
 
-Created by Malcolm Dixon
+Created by **Malcolm Dixon**
+
+---
