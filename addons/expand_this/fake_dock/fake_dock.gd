@@ -39,7 +39,7 @@ var _max_height: float
 #========== OVERRIDDEN VIRTUAL METHODS ==========
 
 func _ready():
-	_inspector_dock = get_parent()
+	_inspector_dock = EditorInterface.get_inspector().get_parent()
 	_inspector_dock.resized.connect(_set_max_height)
 
 	# initialise the max scroll area height
@@ -70,7 +70,6 @@ func clear_content() -> void:
 	# remove existing content
 	for child in _content.get_children():
 		child.queue_free()
-
 
 
 ## Displays a centered message label in place of content.
