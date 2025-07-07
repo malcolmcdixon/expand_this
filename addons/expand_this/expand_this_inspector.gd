@@ -279,8 +279,13 @@ func _set_global_rule(ui_row: ExpandThisUIRow, enabled: bool) -> void:
 
 
 func _set_group_rule(ui_row: ExpandThisUIRow, enabled: bool) -> void:
-	_prefs.set_value("groups", ui_row.key, enabled)
-
+	if not enabled and not _prefs.has_section_key("global", ui_row.group):
+		# No global rule to override, so erase group rule instead of saving `false`
+		_prefs.erase_section_key("groups", ui_row.key)
+	else:
+		# Save normally (true or false)
+		_prefs.set_value("groups", ui_row.key, enabled)
+	
 	ExpandThis.save_prefs()
 
 
