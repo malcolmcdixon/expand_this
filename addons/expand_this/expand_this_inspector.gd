@@ -123,7 +123,7 @@ func _build_ui() -> void:
 	# iterate the inspector_sections for consistent UI order
 	for ui_row in ExpandThisUIRow.get_rows():
 		# get auto expand states
-		var states: Dictionary[String, bool] = _get_auto_expand_states(ui_row)
+		var states: Dictionary = _get_auto_expand_states(ui_row)
 		
 		# add a category label if this section has a different category
 		if ui_row.category != last_category:
@@ -247,8 +247,8 @@ func _rebuild_ui() -> void:
 	_build_ui()
 
 
-func _get_auto_expand_states(ui_row: ExpandThisUIRow) -> Dictionary[String, bool]:
-	var states: Dictionary[String, bool] = {
+func _get_auto_expand_states(ui_row: ExpandThisUIRow) -> Dictionary:
+	var states: Dictionary = {
 		"global": false,
 		"group": false,
 		"override": false

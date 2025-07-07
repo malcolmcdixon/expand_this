@@ -7,7 +7,7 @@ const KEY_SEPARATOR: String = "|"
 
 #========== STATIC VARIABLES ==========
 
-static var _rows: Dictionary[String, ExpandThisUIRow]= {}
+static var _rows: Dictionary = {}
 static var _allow_creation: bool = false
 
 #========== MEMBER VARIABLES ==========
